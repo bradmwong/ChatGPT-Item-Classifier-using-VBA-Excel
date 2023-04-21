@@ -2,36 +2,77 @@ Attribute VB_Name = "ExcelCellClassifier"
 ' Reference: Microsoft XML, v6.
 ' Reference: Microsoft Scripting Runtime
 
-Sub ChatWithGPT()
+Option Compare Binary
+Option Explicit
+
+
+Sub Main()
 
     Dim apiKey As String
-    Dim apiUrl As String
-    Dim inputValue As String
-    Dim response As String
-        
+    apiKey = "YourAPIKeyHere"
+    
     Dim ws As Worksheet
     Set ws = ThisWorkbook.Sheets("Sheet1")
-       
-    ' Set your API key and API URL
-    apiKey = "YourAPIKeyHere"
-    apiUrl = "https://api.openai.com/v1/completions"
     
-    ' Get the user's message
+    Dim inputValue As String
+    Dim outputOptions(1 To 2) As String
+    outputOptions(1) = "fruit"
+    outputOptions(2) = "vegetable"
+    
     inputValue = ws.Range("A2").value
+
+'    Call testing(outputOptions())
     
+    ws.Range("B2").value = ClassifyTypeWithGPT(inputValue, outputOptions(), apiKey)
+    
+End Sub
+
+
+Public Function ClassifyTypeWithGPT(inputValue, outputsArray() As String, apiKey As String) As String
+
+    Dim apiUrl As String
+    Dim response As String
+    Dim prompt As String
+    
+    
+    prompt = GenerateGPTPromptString(inputValue, outputsArray())
+    
+    ' Set your API key and API URL
+    apiUrl = "https://api.openai.com/v1/completions"
+       
     ' Send a request to the ChatGPT API
-    response = SendRequest(apiUrl, apiKey, inputValue)
+    response = SendRequest(apiUrl, apiKey, prompt)
     
     ' Parse the JSON response and extract the response message
     response = ParseResponse(response)
     
-    ' Display the response message in a cell
-    ws.Range("B2").value = response
-    
-End Sub
+   
+    ClassifyTypeWithGPT = response
 
-Function SendRequest(apiUrl As String, apiKey As String, inputValue)
-' As String) As String
+End Function
+
+
+' Function to generate a GPT prompt string
+' Input: inputValue - the value to be identified
+'        outputsArray() - an array of possible types the value could be
+' Output: a string prompt that asks GPT to identify the type of the input value from the list of possible options
+Private Function GenerateGPTPromptString(inputValue, outputsArray() As String) As String
+    
+    ' Join the elements of the outputsArray with a comma and add "or other" to the end
+    Dim outputsTextPrompt As String
+    outputsTextPrompt = Join(outputsArray, ", ")
+    outputsTextPrompt = outputsTextPrompt & ", or other"
+    
+    ' Return the prompt string
+    GenerateGPTPromptString = "I have a(n) '" & inputValue & "'. " & _
+        "Is it a(n) " & outputsTextPrompt & "? " & _
+        "Provide only 1 word as an answer, without punctuation, all lowercase. " & _
+        "Do not provide answers other than " & outputsTextPrompt & "."
+    
+End Function
+
+
+Private Function SendRequest(apiUrl As String, apiKey As String, prompt As String) As String
 
     ' Create an HTTP request with the input value and API key
     Dim http As New MSXML2.XMLHTTP60
@@ -41,9 +82,7 @@ Function SendRequest(apiUrl As String, apiKey As String, inputValue)
     http.setRequestHeader "Authorization", "Bearer " & apiKey
     
     ' Set the request body with the user's message
-    Dim prompt As String
     Dim request As String
-    prompt = "I have a(n) 'snake fruit'. Is it a fruit, vegetable, or other? Provide only 1 word as an answer, without punctuation, all lowercase. Do not provide answers other than 'fruit', 'vegetable', or 'other'."
     request = "{""model"": ""text-davinci-003"", ""prompt"": """ & prompt & """, ""max_tokens"": 20, ""temperature"": 0}"
     Debug.Print request
     
@@ -56,7 +95,7 @@ Function SendRequest(apiUrl As String, apiKey As String, inputValue)
     
 End Function
 
-Function ParseResponse(response As String) As String
+Private Function ParseResponse(response As String) As String
 
     ' Parse the JSON response and extract the response message
     Dim json As Object
@@ -78,4 +117,7 @@ Function ParseResponse(response As String) As String
     Debug.Print ParseResponse
     
 End Function
+
+
+
 
