@@ -8,6 +8,10 @@ Option Explicit
 
 Sub Main()
 
+    Const modelName As String = "gpt-3.5-turbo"
+
+
+
     Dim apikey As String
     apikey = "YourAPIKeyHere"
     
@@ -20,8 +24,10 @@ Sub Main()
     outputOptions(2) = "vegetable"
     
     inputValue = ws.Range("A2").value
+
+    ws.Range("B2").value = ClassifyTypeWithGPT(inputValue, outputOptions(), apikey, modelName)
+
     
-    ws.Range("B2").value = ClassifyTypeWithGPT(inputValue, outputOptions(), apikey)
     
 End Sub
 
@@ -39,10 +45,11 @@ Public Function ClassifyTypeWithGPT(inputValue As String, outputsArray() As Stri
     response = SendGPTRequest(prompt, apikey, modelName)
     
     ' Parse the JSON response and extract the response message
-    response = ParseResponse(response)
+    response = ParseResponse(response, modelName)
     
     ' Check if response the is a possible output
     
+'    Debug.Print response
    
     ' Return response
     ClassifyTypeWithGPT = response
@@ -52,7 +59,7 @@ End Function
 
 
 
-Private Function ParseResponse(response As String) As String
+Private Function ParseResponse(response As String, modelName As String) As String
 
     ' Parse the JSON response and extract the response message
     Dim json As Object
@@ -66,15 +73,48 @@ Private Function ParseResponse(response As String) As String
 '    Set choice = json("choices")(1)
 '    Debug.Print TypeName(choice)
 '    Debug.Print choice("text")
+
+    ' If response contains an error, return error message
+    If json.Exists("error") Then
+    
+        Debug.Print "ERROR FOUND"
+        GoTo errorHandler
+
+    End If
     
     
-'    ParseResponse = json("choices")(1)("text")
-    ParseResponse = json("choices")(1)("message")("content")
+    ' Determine how to parse the output data
+    Select Case modelName
+    
+        ' Chat completion - GPT-4
+        Case "gpt-4", "gpt-4-0314", "gpt-4-32k", "gpt-4-32k-0314"
+            ParseResponse = json("choices")(1)("message")("content")
+            
+        ' Chat completion - GPT-3.5
+        Case "gpt-3.5-turbo", "gpt-3.5-turbo-0301"
+            ParseResponse = json("choices")(1)("message")("content")
+
+        ' Text completion
+        Case "text-davinci-003", "text-davinci-002", "text-curie-001", "text-babbage-001", "text-ada-001"
+            ParseResponse = json("choices")(1)("text")
+
+        Case Else
+
+            ' Handle Error here
+
+    End Select
     
     ParseResponse = LCase(ParseResponse)
     ParseResponse = Trim(ParseResponse)
     ParseResponse = Replace(ParseResponse, vbNewLine, "")
     Debug.Print ParseResponse
+    
+    Exit Function
+    
+errorHandler:
+
+    Debug.Print json("error")("message")
+    ParseResponse = json("error")("message")
     
 End Function
 
@@ -118,12 +158,20 @@ Private Function SendGPTRequest(prompt As String, apikey As String, modelName As
     Dim request As String
     Dim response As String
     
+    ' Determine the appropriate API details for the request
     Select Case modelName
     
-        Case "gpt-4", "gpt-4-0314", "gpt-4-32k", "gpt-4-32k-0314", "gpt-3.5-turbo", "gpt-3.5-turbo-0301"
+        ' Chat completion - GPT-4
+        Case "gpt-4", "gpt-4-0314", "gpt-4-32k", "gpt-4-32k-0314"
             apiUrl = "https://api.openai.com/v1/chat/completions"
             request = "{""model"": """ & modelName & """, ""messages"": [{""role"": ""user"", ""content"": """ & prompt & """}]}"
-            
+
+        ' Chat completion - GPT-3.5
+        Case "gpt-3.5-turbo", "gpt-3.5-turbo-0301"
+            apiUrl = "https://api.openai.com/v1/chat/completions"
+            request = "{""model"": """ & modelName & """, ""messages"": [{""role"": ""user"", ""content"": """ & prompt & """}]}"
+        
+        ' Text completion
         Case "text-davinci-003", "text-davinci-002", "text-curie-001", "text-babbage-001", "text-ada-001"
             apiUrl = "https://api.openai.com/v1/completions"
             request = "{""model"": """ & modelName & """, ""prompt"": """ & prompt & """, ""max_tokens"": " & MAX_TOKENS_PARAM & ", ""temperature"": " & TEMPERATURE_PARAM & "}"
@@ -147,5 +195,9 @@ Private Function SendGPTRequest(prompt As String, apikey As String, modelName As
     SendGPTRequest = response
 
 End Function
+
+
+
+
 
 
