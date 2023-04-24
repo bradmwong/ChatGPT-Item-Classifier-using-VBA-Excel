@@ -56,7 +56,6 @@ Public Function ClassifyTypeWithGPT(inputValue As String, outputOptions() As Str
 End Function
 
 
-
 ' Sub to check for any immediate user entered parameter errors
 ' Input: inputValue - the value to be identified
 '        outputOptions() - an array of possible types the value could be classified as
@@ -175,6 +174,11 @@ Private Function SendGPTRequest(prompt As String, apikey As String, modelName As
     http.send request
     response = http.responseText
     
+    ' Check if status is not 200 OK
+    If http.Status <> 200 Then
+        GoTo err_response
+    End If
+    
     ' Return the response
     SendGPTRequest = response
     
@@ -182,6 +186,9 @@ Private Function SendGPTRequest(prompt As String, apikey As String, modelName As
 
 err_invalidModel:
     Err.Raise 1011, "Model", modelName & " is not a valid model"
+    
+err_response:
+    Err.Raise 2011, "Response", "APIResponseError: " & http.Status & " - " & ParseErrorResponse(response)
 
 End Function
 
@@ -197,11 +204,6 @@ Private Function ParseResponse(response As String, modelName As String) As Strin
     Set json = JsonConverter.ParseJson(response)
     
     Debug.Print response
-
-    ' If response contains an error, return error message
-    If json.Exists("error") Then
-        GoTo err_apiResponseError
-    End If
     
     ' Determine how to parse the output data
     Select Case modelName
@@ -226,13 +228,24 @@ Private Function ParseResponse(response As String, modelName As String) As Strin
     Debug.Print ParseResponse
     
     Exit Function
-    
-err_apiResponseError:
-    Err.Raise 2011, "Response Error", json("error")("message")
 
 err_invalidModel:
     Err.Raise 1011, "Input", modelName & " is not a valid model"
     
+End Function
+
+
+' Function to parse JSON error response
+' Input: response - JSON response
+' Output: the response content from the API request
+Private Function ParseErrorResponse(response As String) As String
+
+    ' Parse the JSON response and extract the response message
+    Dim json As Object
+    Set json = JsonConverter.ParseJson(response)
+    
+    ParseErrorResponse = json("error")("message")
+
 End Function
 
 
