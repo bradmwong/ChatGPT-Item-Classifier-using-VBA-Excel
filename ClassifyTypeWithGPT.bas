@@ -1,4 +1,3 @@
-Attribute VB_Name = "ClassifyTypeWithGPT"
 Option Explicit
 Option Compare Binary
 
