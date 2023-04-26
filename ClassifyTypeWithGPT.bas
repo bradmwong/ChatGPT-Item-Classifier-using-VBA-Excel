@@ -269,7 +269,7 @@ Private Function VerifyResponse(response As String, outputOptions() As String) A
             End If
         Next i
     End If
-    VerifyResponse = "Unable to determine type classification"
+    VerifyResponse = "unknown"
 
 End Function
 
