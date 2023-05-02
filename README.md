@@ -40,7 +40,7 @@ Sub ExampleMacro()
     apiKey = "your-api-key"
     modelName = "text-davinci-003"
     
-    result = ClassifyTypeWithGPT(inputValue, outputOptions, apiKey, modelName)
+    result = ClassifyTypeWithGPT.ClassifyTypeWithGPT(inputValue, outputOptions, apiKey, modelName)
     
     MsgBox "The item '" & inputValue & "' was classified as: " & result
 
