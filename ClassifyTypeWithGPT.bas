@@ -1,28 +1,4 @@
-Option Explicit
-Option Compare Binary
-
-
-Sub ExampleMacro()
-
-    Dim inputValue As String
-    Dim outputOptions(1) As String
-    Dim apiKey As String
-    Dim modelName As String
-    Dim result As String
-    
-    inputValue = "apple"
-    outputOptions(0) = "fruit"
-    outputOptions(1) = "vegetable"
-    apiKey = "your-api-key"
-    modelName = "text-davinci-003"
-    
-    result = ClassifyTypeWithGPT(inputValue, outputOptions, apiKey, modelName)
-    
-    MsgBox "The item '" & inputValue & "' was classified as: " & result
-
-End Sub
-
-
+Attribute VB_Name = "ClassifyTypeWithGPT"
 ' Function to classify an input as one of several predefined outputs
 ' Input: inputValue - the value to be identified
 '        outputOptions() - an array of possible types the value could be classified as
@@ -38,7 +14,7 @@ Public Function ClassifyTypeWithGPT(inputValue As String, outputOptions() As Str
     
     ' Generate GPT text prompt
     prompt = GenerateGPTPromptString(inputValue, outputOptions())
-
+    
     ' Send a request to the ChatGPT API
     response = SendGPTRequest(prompt, apiKey, modelName)
     
@@ -263,10 +239,18 @@ Private Function VerifyResponse(response As String, outputOptions() As String) A
     If response <> "other" Then
         Dim i As Long
         For i = LBound(outputOptions) To UBound(outputOptions)
-            If outputOptions(i) = response Then
+            
+            Dim formattedOption As String
+            formattedOption = outputOptions(i)
+            formattedOption = Trim(formattedOption)
+            formattedOption = LCase(formattedOption)
+            formattedOption = Replace(formattedOption, vbNewLine, "")
+        
+            If formattedOption = response Then
                 VerifyResponse = response
                 Exit Function
             End If
+            
         Next i
     End If
     VerifyResponse = "unknown"
