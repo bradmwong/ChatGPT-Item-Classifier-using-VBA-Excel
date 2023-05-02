@@ -1,4 +1,30 @@
 Attribute VB_Name = "ClassifyTypeWithGPT"
+Option Explicit
+Option Compare Binary
+
+
+
+'******************************************************************************
+' Name:         ChatGPT-Item-Classifier-using-VBA-Excel
+' Author:       Brad Wong
+' Created:      May 2, 2023
+'
+' Description:  This VBA script uses the OpenAI GPT API to classify an input
+'               into one of several predefined outputs. Adding this module
+'               to your VBA project will allow usage of the public function:
+'               "ClassifyTypeWithGPT".
+'
+' Usage:        To use the ClassifyTypeWithGPT function, you will need to
+'               provide the following parameters:
+'                   inputValue          - value to be identified
+'                   outputOptions()     - array of possible classifications
+'                   apikey              - OpenAI key
+'                   modelName           - OpenAI model (default: gpt-3.5-turbo)
+'
+'******************************************************************************
+
+
+
 ' Function to classify an input as one of several predefined outputs
 ' Input: inputValue - the value to be identified
 '        outputOptions() - an array of possible types the value could be classified as
